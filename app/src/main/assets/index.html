@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ЭкоСорт</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#14211B">
+<style>
+:root{--bg:#EEF2EA;--ink:#14211B;--card:#fff;--mut:#5E6B63;--line:#D3DBCF;--ok:#2E9E6B;--bad:#D6453D;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1713;--ink:#EAF1E8;--card:#18231D;--mut:#93A39A;--line:#2A3A31}}
+:root[data-theme="dark"]{--bg:#0F1713;--ink:#EAF1E8;--card:#18231D;--mut:#93A39A;--line:#2A3A31}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;padding:18px 16px 12px;max-width:560px;width:100%;margin:0 auto}
+h1{font-size:26px;letter-spacing:-.02em}
+h2{font-size:20px;margin-bottom:4px}
+.mut{color:var(--mut);font-size:14px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card)}
+nav button{flex:1;padding:10px 4px 12px;border:0;background:none;color:var(--mut);font:600 13px system-ui;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:22px}
+nav button.on{color:var(--ink)}
+nav button.on span{transform:translateY(-1px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.btn{width:100%;border:0;border-radius:14px;padding:14px;font:700 16px system-ui;background:var(--ink);color:var(--bg)}
+.row{display:flex;gap:10px;align-items:center}
+.big{font-size:56px;line-height:1}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.bin{border:0;border-radius:14px;padding:14px 8px;font:700 15px system-ui;color:#14211B;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bin span{font-size:24px}
+.bin.right{outline:4px solid var(--ok)}
+.bin.wrong{outline:4px solid var(--bad)}
+.fact{border-left:5px solid var(--ok);padding:10px 12px;margin-top:14px;background:var(--card);border-radius:0 12px 12px 0}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:8px 0 14px}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.flip{width:100%;text-align:left;border:1px solid var(--line);border-left-width:8px;background:var(--card);color:var(--ink);border-radius:14px;padding:14px;margin:8px 0;font:inherit;display:block}
+.flip .t{display:flex;gap:12px;align-items:center;font-weight:700}
+.flip .t b{font-size:30px}
+.flip .back{margin-top:10px;font-size:15px}
+.flip .back em{font-style:normal;font-weight:700}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat b{display:block;font-size:28px}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+var BINS={plastic:{n:"Пластик",e:"🧴",c:"#F2C230"},paper:{n:"Бумага",e:"📄",c:"#6FA8F0"},glass:{n:"Стекло",e:"🫙",c:"#5CC18E"},metal:{n:"Металл",e:"🥫",c:"#B3BBC4"},bio:{n:"Органика",e:"🍂",c:"#C99A6B"},hazard:{n:"Опасное",e:"⚠️",c:"#F07C73"}};
+var ITEMS=[
+["🍾","Пластиковая бутылка","plastic","Пластик разлагается сотни лет. Из переработанных бутылок делают, например, ткань для одежды."],
+["📰","Газета","paper","Бумагу можно перерабатывать несколько раз, так мы сохраняем деревья и воду."],
+["🫙","Стеклянная банка","glass","Стекло можно переплавлять снова и снова без потери качества."],
+["🥫","Консервная банка","metal","Металл перерабатывается много раз. Перед сдачей банку лучше сполоснуть."],
+["🍌","Банановая кожура","bio","Пищевые отходы превращаются в компост — удобрение для растений."],
+["🔋","Батарейка","hazard","В батарейках есть тяжёлые металлы. Их нельзя выбрасывать в обычный бак, сдавай в пункт приёма."],
+["📦","Картонная коробка","paper","Картон — это тоже бумага. Перед сдачей коробку лучше сложить."],
+["🍎","Яблочный огрызок","bio","Органика на свалке выделяет метан, а в компосте даёт почву."],
+["💡","Энергосберегающая лампа","hazard","Такие лампы содержат ртуть. Разбивать их нельзя, сдавай в специальный пункт."],
+["🥤","Алюминиевая банка","metal","Переработка алюминия экономит около 95% энергии по сравнению с новым металлом."],
+["🍷","Стеклянная бутылка","glass","Цветное и прозрачное стекло лучше сдавать отдельно, если есть такая возможность."],
+["🧼","Пластиковый флакон от шампуня","plastic","Флакон нужно опустошить и сполоснуть, тогда его примут на переработку."],
+["📄","Офисная бумага","paper","Чистая бумага — лучшее сырьё для переработки. Пиши на обеих сторонах листа."],
+["🥚","Яичная скорлупа","bio","Скорлупа полезна в компосте: она даёт растениям кальций."],
+["📱","Старый телефон","hazard","В электронике есть ценные металлы и вредные вещества. Её сдают в пункты приёма электроники."],
+["🥛","Пластиковая крышка","plastic","Крышки часто делают из другого пластика, поэтому их иногда сдают отдельно от бутылок."],
+["🥡","Пластиковый контейнер","plastic","Перед сдачей контейнер нужно сполоснуть от остатков еды."],
+["🛍️","Полиэтиленовый пакет","plastic","Пакет разлагается сотни лет. Лучше ходить в магазин с многоразовой сумкой."],
+["📚","Старая тетрадь","paper","Тетрадь без пластиковой обложки можно сдать как макулатуру."],
+["📖","Журнал","paper","Журналы сдают на переработку вместе с газетами."],
+["🔩","Старый гвоздь","metal","Металлолом принимают в пунктах приёма металла, из него снова делают сталь."],
+["🍯","Металлическая крышка от банки","metal","Металлические крышки тоже можно сдавать вместе с металлом."],
+["🍂","Опавшие листья","bio","Листья — отличная основа для компоста и перегноя."],
+["🥔","Картофельные очистки","bio","Очистки быстро перегнивают в компосте и возвращают землю в почву."],
+["☕","Кофейная гуща","bio","Гуща подходит для компоста и как удобрение для комнатных растений."],
+["💊","Просроченные лекарства","hazard","Лекарства нельзя выливать в раковину: они попадают в воду. Их сдают в аптеки или специальные пункты."],
+["🎨","Остатки краски","hazard","Краска и растворители вредны для почвы и воды. Их сдают в пункты приёма опасных отходов."],
+["🔌","Сломанная зарядка","hazard","Провода и электроника — это электронные отходы. Их сдают в пункты приёма электроники."]
+];
+var S={points:0,best:0,played:0,correct:0,total:0,learned:[]};
+try{var raw=localStorage.getItem("ecosort");if(raw){var p=JSON.parse(raw);for(var k in p)S[k]=p[k]}}catch(e){}
+function save(){try{localStorage.setItem("ecosort",JSON.stringify(S))}catch(e){}}
+if(!S.habits)S.habits={};
+function dk(d){d=d||new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
+var HAB=[["🛍️","Взял многоразовую сумку",0.04],["🚶","Прошёл 2 км пешком вместо поездки",0.4],["💡","Выключил свет, когда вышел",0.1],["🥤","Пил из многоразовой бутылки",0.08],["♻️","Отсортировал мусор",0.2],["🚿","Сократил душ на 2 минуты",0.1],["🍽️","Доел еду и ничего не выбросил",0.5],["🔌","Выдернул зарядку из розетки",0.03]];
+function streak(){var n=0,d=new Date();if(!(S.habits[dk(d)]||[]).length)d.setDate(d.getDate()-1);while((S.habits[dk(d)]||[]).length){n++;d.setDate(d.getDate()-1)}return n}
+function co2(){var t=0;for(var k in S.habits)S.habits[k].forEach(function(i){if(HAB[i])t+=HAB[i][2]});return t}
+function habits(){var td=S.habits[dk()]||[];var h='<h1>Эко-привычки</h1><p class="mut">Отмечай, что сделал сегодня: +3 очка за привычку. Цифры CO₂ — примерная оценка.</p><div class="stats" style="margin-top:12px"><div class="stat"><b>🔥 '+streak()+'</b><span class="mut">дней подряд</span></div><div class="stat"><b>'+co2().toFixed(1)+' кг</b><span class="mut">CO₂ сэкономлено</span></div></div><div class="bar" style="margin-top:14px"><i style="width:'+td.length/HAB.length*100+'%"></i></div><p class="mut" style="margin:-8px 0 8px">Сегодня: '+td.length+' из '+HAB.length+'</p>';
+HAB.forEach(function(x,i){var on=td.indexOf(i)>-1;h+='<button class="flip" style="border-left-color:'+(on?'var(--ok)':'var(--line)')+';opacity:'+(on?.7:1)+'" onclick="hab('+i+')"><div class="t"><b>'+x[0]+'</b>'+x[1]+(on?' ✅':'')+'</div></button>'});return h}
+function hab(i){var k=dk();var a=S.habits[k]||(S.habits[k]=[]);var j=a.indexOf(i);if(j<0){a.push(i);S.points+=3}else{a.splice(j,1);S.points=Math.max(0,S.points-3)}save();var y=document.getElementById("app").scrollTop;render();document.getElementById("app").scrollTop=y}
+var tab="learn",G=null,openCard=-1;
+var TABS=[["learn","📚","Карточки"],["play","🎮","Игра"],["habits","🌍","Привычки"],["score","🏆","Счёт"]];
+function level(){var p=S.points;return p<50?["Росток",50]:p<150?["Саженец",150]:p<350?["Дерево",350]:["Хранитель леса",null]}
+function nav(){document.getElementById("nav").innerHTML=TABS.map(function(t){return '<button class="'+(tab==t[0]?"on":"")+'" onclick="go(\''+t[0]+'\')"><span>'+t[1]+'</span>'+t[2]+'</button>'}).join("")}
+function go(t){tab=t;render()}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var x=a[i];a[i]=a[j];a[j]=x}return a}
+function render(){nav();var el=document.getElementById("app");el.scrollTop=0;
+if(tab=="learn")el.innerHTML=learn();else if(tab=="play")el.innerHTML=play();else if(tab=="habits")el.innerHTML=habits();else el.innerHTML=score()}
+function learn(){var done=S.learned.length;
+var h='<h1>Куда это выбросить?</h1><p class="mut">Нажми на карточку, чтобы узнать ответ и факт.</p>';
+h+='<div class="bar"><i style="width:'+Math.round(done/ITEMS.length*100)+'%"></i></div><p class="mut" style="margin:-8px 0 8px">Выучено: '+done+' из '+ITEMS.length+'</p>';
+ITEMS.forEach(function(it,i){var b=BINS[it[2]];var o=openCard==i;
+h+='<button class="flip" style="border-left-color:'+b.c+'" onclick="toggleCard('+i+')"><div class="t"><b>'+it[0]+'</b>'+it[1]+(S.learned.indexOf(i)>-1?' ✅':'')+'</div>';
+if(o)h+='<div class="back"><em>Бак: '+b.n+'.</em> '+it[3]+(S.learned.indexOf(i)>-1?'':'<div style="margin-top:10px"><span class="btn" style="display:block;text-align:center;padding:10px" onclick="event.stopPropagation();learnIt('+i+')">Запомнил (+2)</span></div>')+'</div>';
+h+='</button>'});return h}
+function toggleCard(i){openCard=openCard==i?-1:i;var y=document.getElementById("app").scrollTop;render();document.getElementById("app").scrollTop=y}
+function learnIt(i){if(S.learned.indexOf(i)<0){S.learned.push(i);S.points+=2;save()}var y=document.getElementById("app").scrollTop;render();document.getElementById("app").scrollTop=y}
+function start(){G={q:shuffle(ITEMS).slice(0,10),i:0,pts:0,ok:0,streak:0,ans:null};render()}
+function play(){
+if(!G)return '<h1>Игра-сортировщик</h1><p class="mut">10 предметов. Выбери правильный бак. За серию верных ответов даются бонусы.</p><div class="card"><div class="big">♻️</div><p style="margin:10px 0 14px">Рекорд: <b>'+S.best+'</b> очков</p><button class="btn" onclick="start()">Начать игру</button></div>';
+if(G.i>=G.q.length)return finish();
+var it=G.q[G.i];
+var h='<div class="row" style="justify-content:space-between"><span class="mut">Вопрос '+(G.i+1)+' из '+G.q.length+'</span><b>⭐ '+G.pts+(G.streak>1?' 🔥'+G.streak:'')+'</b></div><div class="bar"><i style="width:'+(G.i/G.q.length*100)+'%"></i></div>';
+h+='<div class="card" style="text-align:center"><div class="big">'+it[0]+'</div><h2 style="margin-top:10px">'+it[1]+'</h2><p class="mut">В какой бак?</p></div><div class="bins">';
+Object.keys(BINS).forEach(function(k){var b=BINS[k];var c="bin";
+if(G.ans){if(k==it[2])c+=" right";else if(k==G.ans)c+=" wrong"}
+h+='<button class="'+c+'" style="background:'+b.c+'" '+(G.ans?'disabled':'onclick="answer(\''+k+'\')"')+'><span>'+b.e+'</span>'+b.n+'</button>'});
+h+='</div>';
+if(G.ans){var good=G.ans==it[2];h+='<div class="fact" style="border-left-color:'+(good?'var(--ok)':'var(--bad)')+'"><b>'+(good?'Верно!':'Не совсем. Правильно: '+BINS[it[2]].n+'.')+'</b><br>'+it[3]+'</div><button class="btn" style="margin-top:14px" onclick="next()">'+(G.i==G.q.length-1?'Результат':'Дальше')+'</button>'}
+return h}
+function answer(k){var it=G.q[G.i];G.ans=k;S.total++;
+if(k==it[2]){G.ok++;G.streak++;var add=10+Math.min(G.streak-1,5)*2;G.pts+=add;S.correct++}else G.streak=0;
+render()}
+function next(){G.i++;G.ans=null;render()}
+function finish(){S.points+=G.pts;S.played++;if(G.pts>S.best)S.best=G.pts;save();var g=G;
+var msg=g.ok>=9?"Ты настоящий эко-эксперт!":g.ok>=6?"Хороший результат. Загляни в карточки и стань ещё лучше.":"Есть над чем поработать. Начни с карточек.";
+G=null;
+return '<h1>Игра окончена</h1><div class="card" style="text-align:center"><div class="big">'+(g.ok>=9?'🌳':g.ok>=6?'🌿':'🌱')+'</div><h2 style="margin-top:10px">'+g.ok+' из '+g.q.length+' верно</h2><p>+'+g.pts+' очков</p><p class="mut" style="margin:8px 0 14px">'+msg+'</p><button class="btn" onclick="start()">Играть ещё</button></div>'}
+function score(){var l=level();var acc=S.total?Math.round(S.correct/S.total*100):0;
+var h='<h1>Мой счёт</h1><div class="card"><div class="mut">Уровень</div><h2>'+l[0]+'</h2>';
+if(l[1])h+='<div class="bar"><i style="width:'+Math.min(100,S.points/l[1]*100)+'%"></i></div><p class="mut">До следующего уровня: '+(l[1]-S.points)+' очков</p>';else h+='<p class="mut">Максимальный уровень достигнут.</p>';
+h+='</div><div class="stats"><div class="stat"><b>'+S.points+'</b><span class="mut">всего очков</span></div><div class="stat"><b>'+S.best+'</b><span class="mut">лучшая игра</span></div><div class="stat"><b>'+acc+'%</b><span class="mut">верных ответов</span></div><div class="stat"><b>'+S.learned.length+'/'+ITEMS.length+'</b><span class="mut">карточек выучено</span></div><div class="stat"><b>🔥 '+streak()+'</b><span class="mut">дней подряд</span></div><div class="stat"><b>'+co2().toFixed(1)+' кг</b><span class="mut">CO₂ сэкономлено</span></div></div>';
+h+='<button class="btn" style="margin-top:16px;background:var(--card);color:var(--bad);border:1px solid var(--line)" onclick="resetAll()">Сбросить прогресс</button>';return h}
+function resetAll(){if(confirm("Удалить весь прогресс?")){S={points:0,best:0,played:0,correct:0,total:0,learned:[],habits:{}};save();render()}}
+render();
+</script>
+</body>
+</html>
